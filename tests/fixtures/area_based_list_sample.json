@@ -1,0 +1,45 @@
+{
+  "response": {
+    "header": { "resultCode": "0000", "resultMsg": "OK" },
+    "body": {
+      "items": {
+        "item": [
+          {
+            "contentid": "126508",
+            "title": "경복궁",
+            "addr1": "서울특별시 종로구 사직로 161",
+            "addr2": "(세종로)",
+            "mapx": "126.9769930325",
+            "mapy": "37.5760836609",
+            "tel": "02-3700-3900",
+            "firstimage": "http://tong.visitkorea.or.kr/cms/gyeongbokgung.jpg",
+            "contenttypeid": "12"
+          },
+          {
+            "contentid": "999999",
+            "title": "좌표없는장소",
+            "addr1": "주소만 있고 좌표 없음",
+            "addr2": "",
+            "mapx": "",
+            "mapy": "",
+            "tel": "",
+            "firstimage": ""
+          },
+          {
+            "contentid": "264337",
+            "title": "북촌한옥마을",
+            "addr1": "서울특별시 종로구 계동길 37",
+            "addr2": "",
+            "mapx": "126.9849929644",
+            "mapy": "37.5826073914",
+            "tel": "",
+            "firstimage": ""
+          }
+        ]
+      },
+      "numOfRows": 100,
+      "pageNo": 1,
+      "totalCount": 3
+    }
+  }
+}
