@@ -78,9 +78,3 @@ python -m app.cli --area-code 1 --content-type-id 12  # 서울 관광지
 pytest
 ```
 
-## 열린 결정 (roadmap §6)
-
-- **트리거**: 수동(`/ingest`) vs 크론 — 둘 다 `services.ingest` 공유, 운영에서 확정.
-- **대상 areaCode 범위**, `contentTypeId` 화이트리스트.
-- **DB 접근**: 같은 TiDB 직접 쓰기(현재 채택) vs backend write-API 경유 — 바꾸려면 `repository.py` 만 교체.
-- **변경추적**: `areaBasedSyncList2` + `external_place_raw_snapshots` 는 **배치 정착 후** 활성화(지금은 YAGNI).
