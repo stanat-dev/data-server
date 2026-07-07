@@ -1,0 +1,10 @@
+# .env 에 실 시크릿(TourAPI 키, DB 접속정보)이 있으므로 이미지에 절대 포함 금지
+.env
+.git
+.venv
+.pytest_cache
+.remember
+.claude
+tests
+__pycache__
+*.egg-info

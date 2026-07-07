@@ -26,6 +26,19 @@ class TourApiError(RuntimeError):
     """TourAPI 가 정상 응답 형태가 아닐 때."""
 
 
+def _log_retry(retry_state) -> None:
+    # 예외 '타입명'만 남긴다. httpx 예외 메시지에는 serviceKey 가 포함된
+    # 전체 URL 이 들어갈 수 있어(키 로그 금지) 메시지는 로깅하지 않는다.
+    exc = retry_state.outcome.exception() if retry_state.outcome else None
+    wait = retry_state.next_action.sleep if retry_state.next_action else 0
+    logger.warning(
+        "TourAPI 재시도 attempt=%s wait=%.1fs cause=%s",
+        retry_state.attempt_number,
+        wait,
+        type(exc).__name__ if exc else "unknown",
+    )
+
+
 class TourApiClient:
     def __init__(self, settings: Settings, client: Optional[httpx.Client] = None):
         self._settings = settings
@@ -45,11 +58,20 @@ class TourApiClient:
         wait=wait_exponential(multiplier=0.5, min=0.5, max=8),
         stop=stop_after_attempt(4),
         reraise=True,
+        before_sleep=_log_retry,
     )
     def _fetch_page(self, params: dict[str, Any]) -> dict[str, Any]:
         url = f"{self._settings.tourapi_base_url}/{self._settings.tourapi_area_based_op}"
         resp = self._client.get(url, params=params)
-        resp.raise_for_status()
+        try:
+            resp.raise_for_status()
+        except httpx.HTTPStatusError:
+            # HTTPStatusError 메시지/체인에는 serviceKey 포함 URL 이 들어가므로
+            # 상태코드+본문 스니펫만 담아 변환하고 체인은 자른다(키 로그 유출 방지).
+            raise TourApiError(
+                f"HTTP {resp.status_code} {self._settings.tourapi_area_based_op}: "
+                f"body={resp.text[:200]!r}"
+            ) from None
         # TourAPI 는 에러 시에도 200 + XML 을 줄 때가 있어 content-type 으로 방어.
         ctype = resp.headers.get("content-type", "")
         if "json" not in ctype.lower():

@@ -26,6 +26,14 @@ def run_ingest(req: IngestRequest, settings: Settings | None = None) -> IngestRe
 
     max_pages = req.max_pages if req.max_pages is not None else settings.batch_max_pages
 
+    logger.info(
+        "ingest start area_code=%s sigungu_code=%s content_type_id=%s max_pages=%s",
+        req.area_code,
+        req.sigungu_code,
+        req.content_type_id,
+        max_pages,
+    )
+
     with TourApiClient(settings) as client:
         items = client.iter_area_based(
             area_code=req.area_code,
@@ -48,14 +56,19 @@ def run_ingest(req: IngestRequest, settings: Settings | None = None) -> IngestRe
         with session_scope() as session:
             upserted = upsert_places(session, normalized, fetched_at)
 
+    finished_at = datetime.now()
     result = IngestResult(
         fetched=fetched,
         skipped_no_coords=skipped,
         upserted=upserted,
         started_at=started_at,
-        finished_at=datetime.now(),
+        finished_at=finished_at,
     )
     logger.info(
-        "ingest done fetched=%s skipped=%s upserted=%s", fetched, skipped, upserted
+        "ingest done fetched=%s skipped=%s upserted=%s elapsed_ms=%s",
+        fetched,
+        skipped,
+        upserted,
+        round((finished_at - started_at).total_seconds() * 1000),
     )
     return result
