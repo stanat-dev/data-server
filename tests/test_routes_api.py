@@ -27,7 +27,8 @@ def test_generate_route_contract_shape():
     body = resp.json()
 
     assert set(body.keys()) == {"algorithm_version", "days"}
-    assert body["algorithm_version"] == "distance-v1"
+    # algorithm 미지정 시 서버 기본은 distance-v2 (v1 고정은 algorithm="distance-v1")
+    assert body["algorithm_version"] == "distance-v2"
     assert [d["day_no"] for d in body["days"]] == [1, 2]
 
     first_item = body["days"][0]["items"][0]

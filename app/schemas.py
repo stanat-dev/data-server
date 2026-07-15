@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
+
+# backend-spring TripPlaceItemType 과 1:1 (distance-v2 규칙 패스에서 사용)
+PlaceItemType = Literal["SACRED", "TOURIST_SPOT", "RESTAURANT", "ACCOMMODATION", "CAFE", "ETC"]
+
+RouteAlgorithm = Literal["distance-v1", "distance-v2"]
 
 
 class NormalizedPlace(BaseModel):
@@ -47,13 +52,21 @@ class RoutePlaceIn(BaseModel):
     ref: str
     lat: float = Field(..., ge=-90, le=90)
     lng: float = Field(..., ge=-180, le=180)
-    stay_minutes: Optional[int] = Field(None, ge=0, description="distance-v1 은 미사용, 일정구성용 예약")
+    stay_minutes: Optional[int] = Field(
+        None, ge=0, description="체류 분. distance-v2 는 일자 부하/시계 계산에 사용(없으면 타입별 기본값)"
+    )
+    item_type: Optional[PlaceItemType] = Field(
+        None, description="distance-v2 규칙 패스용. 요청 전체에 하나도 없으면 규칙 no-op"
+    )
 
 
 class RouteGenerateRequest(BaseModel):
 
     day_count: int = Field(..., ge=1, le=30)
     places: list[RoutePlaceIn] = Field(..., min_length=1)
+    algorithm: Optional[RouteAlgorithm] = Field(
+        None, description="None=서버 기본(distance-v2). 'distance-v1' 로 요청 단위 롤백 가능"
+    )
 
 
 class RouteItemOut(BaseModel):
@@ -66,12 +79,26 @@ class RouteItemOut(BaseModel):
 
 
 class RouteDayOut(BaseModel):
+    """additive 필드(day_load_minutes, over_budget)는 distance-v2 만 설정.
+
+    응답은 exclude_unset 직렬화라 distance-v1 경로에선 wire 에 나타나지 않는다
+    (하위호환 — backend-spring 어댑터 무수정 동작).
+    """
 
     day_no: int
     items: list[RouteItemOut]
+    day_load_minutes: Optional[int] = Field(
+        None, description="distance-v2: Σ체류 + Σ이동(felt) 분"
+    )
+    over_budget: Optional[bool] = Field(
+        None, description="distance-v2: 일일 예산(600분) 초과 여부"
+    )
 
 
 class RouteGenerateResponse(BaseModel):
 
     algorithm_version: str
     days: list[RouteDayOut]
+    suggested_day_count: Optional[int] = Field(
+        None, description="distance-v2: 총부하가 day_count×600분을 넘을 때만 설정되는 권장 일수"
+    )
