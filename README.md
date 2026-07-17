@@ -1,4 +1,4 @@
-# data-server
+# Data-server
 
 stanat **TourAPI 적재 + 경로 생성 서버** (FastAPI/Python).
 
